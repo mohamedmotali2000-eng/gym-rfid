@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام إدارة الجيم - RFID</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #ff6b00;
+    --primary-dark: #cc5500;
+    --bg: #0a0a0f;
+    --bg2: #12121a;
+    --bg3: #1a1a28;
+    --card: #16161f;
+    --border: #2a2a3a;
+    --text: #f0f0f0;
+    --text2: #888;
+    --green: #00e676;
+    --red: #ff1744;
+    --yellow: #ffd740;
+    --blue: #448aff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    direction: rtl;
+    overflow-x: hidden;
+  }
+
+  /* ===================== LOGIN ===================== */
+  #loginScreen {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .login-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 44px 36px;
+    width: 380px;
+    max-width: 95vw;
+    text-align: center;
+    animation: slideUp 0.4s ease;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .login-logo {
+    width: 76px; height: 76px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px;
+    margin: 0 auto 20px;
+    box-shadow: 0 8px 30px rgba(255,107,0,0.5);
+  }
+
+  .login-title { font-size: 24px; font-weight: 900; margin-bottom: 6px; }
+  .login-sub { font-size: 14px; color: var(--text2); margin-bottom: 28px; }
+
+  .login-input-wrap { position: relative; margin-bottom: 14px; }
+
+  .login-input {
+    width: 100%;
+    background: var(--bg3);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 46px 14px 16px;
+    color: var(--text);
+    font-family: 'Cairo', sans-serif;
+    font-size: 18px;
+    outline: none;
+    text-align: center;
+    letter-spacing: 4px;
+    transition: border-color 0.2s;
+    direction: ltr;
+  }
+
+  .login-input:focus { border-color: var(--primary); }
+  .login-input.error { border-color: var(--red); animation: shake 0.4s; }
+  .login-input.success { border-color: var(--green); }
+
+  .toggle-pw {
+    position: absolute;
+    left: 14px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none;
+    color: var(--text2); cursor: pointer; font-size: 18px;
+  }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-10px); }
+    40% { transform: translateX(10px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+
+  .login-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white; border: none; border-radius: 12px;
+    padding: 14px; font-family: 'Cairo', sans-serif;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; box-shadow: 0 4px 15px rgba(255,107,0,0.3);
+  }
+
+  .login-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,107,0,0.4); }
+  .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .login-error { color: var(--red); font-size: 13px; margin-top: 10px; min-height: 20px; font-weight: 600; }
+  .login-attempts { color: var(--text2); font-size: 12px; margin-top: 8px; }
+
+  /* ===================== HEADER ===================== */
+  header {
+    background: var(--bg2);
+    border-bottom: 2px solid var(--primary);
+    padding: 0 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 4px 30px rgba(255,107,0,0.15);
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 18px; font-weight: 900; color: var(--primary);
+  }
+
+  .logo-icon {
+    width: 38px; height: 38px;
+    background: var(--primary); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+
+  .header-time {
+    font-size: 13px; color: var(--text2);
+    background: var(--bg3); padding: 5px 12px;
+    border-radius: 20px; border: 1px solid var(--border);
+    direction: ltr; font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .header-actions { display: flex; align-items: center; gap: 6px; }
+
+  .lang-toggle {
+    display: flex; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  }
+
+  .lang-btn {
+    padding: 5px 9px; font-size: 11px; font-weight: 700;
+    cursor: pointer; background: transparent; border: none;
+    color: var(--text2); font-family: 'Cairo', sans-serif; transition: all 0.2s;
+  }
+
+  .lang-btn.active { background: var(--primary); color: white; }
+
+  /* ===================== LAYOUT ===================== */
+  .layout { display: flex; min-height: calc(100vh - 60px); }
+
+  .sidebar {
+    width: 210px; background: var(--bg2);
+    border-left: 1px solid var(--border);
+    padding: 16px 10px;
+    display: flex; flex-direction: column; gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 14px; border-radius: 10px; cursor: pointer;
+    font-size: 14px; font-weight: 600; color: var(--text2);
+    transition: all 0.2s; border: 1px solid transparent;
+    user-select: none;
+  }
+
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: rgba(255,107,0,0.15); color: var(--primary); border-color: rgba(255,107,0,0.3); }
+  .nav-icon { font-size: 18px; flex-shrink: 0; }
+
+  main { flex: 1; padding: 20px; overflow-y: auto; min-width: 0; }
+
+  /* ===================== BOTTOM NAV ===================== */
+  .bottom-nav {
+    display: none; position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--bg2); border-top: 1px solid var(--border);
+    z-index: 100; padding: 6px 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .bottom-nav-inner { display: flex; justify-content: space-around; }
+
+  .bottom-nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 5px 12px; cursor: pointer; border-radius: 10px;
+    color: var(--text2); font-size: 10px; font-weight: 700;
+    min-width: 56px; transition: all 0.2s; user-select: none;
+  }
+
+  .bottom-nav-item.active { color: var(--primary); }
+  .bottom-nav-item .nav-icon { font-size: 20px; }
+
+  /* ===================== MOBILE ===================== */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .bottom-nav { display: block; }
+    main { padding: 12px; padding-bottom: 80px; }
+    header { padding: 0 10px; height: 52px; }
+    .logo { font-size: 14px; gap: 8px; }
+    .logo-icon { width: 32px; height: 32px; font-size: 15px; }
+    .logo-text { display: none; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat-card { padding: 14px; }
+    .stat-value { font-size: 28px; }
+    .form-row { grid-template-columns: 1fr; }
+    .modal { padding: 18px; margin: 10px; }
+    table { font-size: 11px; }
+    th, td { padding: 8px 8px; }
+    .rfid-scanner { padding: 20px; }
+    .rfid-icon { font-size: 40px; }
+    .rfid-text { font-size: 14px; }
+    .hbtn-text { display: none; }
+    .header-actions { gap: 4px; }
+    .header-time { font-size: 11px; padding: 4px 8px; }
+    .mobile-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .mobile-scroll table { min-width: 500px; }
+  }
+
+  /* ===================== PAGES ===================== */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ===================== STATS ===================== */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 14px; margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px;
+    position: relative; overflow: hidden; transition: transform 0.2s;
+    cursor: default;
+  }
+
+  .stat-card:hover { transform: translateY(-2px); }
+
+  .stat-card::before {
+    content: ''; position: absolute; top: 0; right: 0;
+    width: 4px; height: 100%;
+    background: var(--accent, var(--primary));
+  }
+
+  .stat-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; font-weight: 600; }
+  .stat-value { font-size: 34px; font-weight: 900; color: var(--accent, var(--primary)); line-height: 1; }
+  .stat-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+  /* ===================== RFID ===================== */
+  .rfid-scanner {
+    background: var(--card); border: 2px dashed var(--border);
+    border-radius: 16px; padding: 28px; text-align: center;
+    margin-bottom: 20px; transition: all 0.3s; cursor: pointer;
+    user-select: none;
+  }
+
+  .rfid-scanner.ready { border-color: var(--blue); background: rgba(68,138,255,0.05); }
+  .rfid-scanner.scanning { border-color: var(--primary); background: rgba(255,107,0,0.05); animation: pulse 1.5s infinite; }
+  .rfid-scanner.success { border-color: var(--green); background: rgba(0,230,118,0.05); }
+  .rfid-scanner.error { border-color: var(--red); background: rgba(255,23,68,0.05); }
+
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(255,107,0,0.4); }
+    50% { box-shadow: 0 0 0 20px rgba(255,107,0,0); }
+  }
+
+  .rfid-icon { font-size: 56px; margin-bottom: 10px; }
+  .rfid-text { font-size: 16px; font-weight: 700; color: var(--text2); }
+  .rfid-result { font-size: 20px; font-weight: 900; margin-top: 10px; min-height: 28px; }
+
+  /* ===================== SECTION TITLE ===================== */
+  .section-title {
+    font-size: 16px; font-weight: 700; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px; color: var(--text);
+  }
+
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ===================== TABLE ===================== */
+  .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: var(--bg3); padding: 11px 14px; font-size: 11px; font-weight: 700; color: var(--text2); text-align: right; white-space: nowrap; }
+  td { padding: 12px 14px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ===================== BADGES ===================== */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .badge-active { background: rgba(0,230,118,0.15); color: var(--green); }
+  .badge-expired { background: rgba(255,23,68,0.15); color: var(--red); }
+  .badge-warning { background: rgba(255,215,64,0.15); color: var(--yellow); }
+  .badge-info { background: rgba(68,138,255,0.15); color: var(--blue); }
+
+  /* ===================== BUTTONS ===================== */
+  .btn { padding: 9px 18px; border-radius: 10px; border: none; cursor: pointer; font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 700; transition: all 0.2s; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; user-select: none; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+  .btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 8px; }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--text2); }
+  .btn-danger { background: rgba(255,23,68,0.15); color: var(--red); border: 1px solid rgba(255,23,68,0.3); }
+  .btn-danger:hover { background: rgba(255,23,68,0.25); }
+  .btn-success { background: rgba(0,230,118,0.15); color: var(--green); border: 1px solid rgba(0,230,118,0.3); }
+  .btn-success:hover { background: rgba(0,230,118,0.25); }
+  .btn-blue { background: rgba(68,138,255,0.15); color: var(--blue); border: 1px solid rgba(68,138,255,0.3); }
+  .btn-blue:hover { background: rgba(68,138,255,0.25); }
+
+  /* ===================== MODAL ===================== */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; padding: 16px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 18px; padding: 26px; width: 100%; max-width: 480px; animation: slideUp 0.3s ease; max-height: 90vh; overflow-y: auto; }
+
+  @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .modal-title { font-size: 19px; font-weight: 900; margin-bottom: 18px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+  .form-group { margin-bottom: 14px; }
+  label { display: block; font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 5px; }
+
+  input, select {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 13px; color: var(--text);
+    font-family: 'Cairo', sans-serif; font-size: 14px; outline: none;
+    transition: border-color 0.2s; direction: rtl;
+  }
+
+  input:focus, select:focus { border-color: var(--primary); }
+  input.input-error { border-color: var(--red); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; flex-wrap: wrap; }
+
+  .rfid-assign {
+    background: var(--bg3); border: 2px dashed var(--border);
+    border-radius: 10px; padding: 12px; text-align: center;
+    cursor: pointer; transition: all 0.2s; margin-top: 8px;
+    font-size: 13px; color: var(--text2);
+  }
+  .rfid-assign:hover { border-color: var(--primary); color: var(--primary); }
+
+  /* ===================== LOG ITEMS ===================== */
+  .log-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; transition: background 0.15s; }
+  .log-item:last-child { border-bottom: none; }
+  .log-item:hover { background: rgba(255,255,255,0.02); }
+  .log-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .log-dot.in { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .log-dot.out { background: var(--red); box-shadow: 0 0 8px var(--red); }
+
+  /* ===================== SEARCH ===================== */
+  .search-bar { position: relative; margin-bottom: 14px; }
+  .search-bar input { padding-right: 38px; }
+  .search-icon { position: absolute; right: 13px; top: 50%; transform: translateY(-50%); color: var(--text2); font-size: 15px; pointer-events: none; }
+
+  /* ===================== AVATAR ===================== */
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; color: white; flex-shrink: 0; }
+  .member-info { display: flex; align-items: center; gap: 9px; }
+
+  /* ===================== TOAST ===================== */
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 22px; font-size: 14px; font-weight: 700; z-index: 9999; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); display: flex; align-items: center; gap: 9px; white-space: nowrap; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--green); color: var(--green); }
+  .toast.error { border-color: var(--red); color: var(--red); }
+  .toast.info { border-color: var(--blue); color: var(--blue); }
+
+  @media (min-width: 769px) { .toast { bottom: 24px; } }
+
+  /* ===================== DAYS ===================== */
+  .days-ok { color: var(--green); font-size: 12px; font-weight: 600; }
+  .days-warn { color: var(--yellow); font-size: 12px; font-weight: 600; }
+  .days-expired { color: var(--red); font-size: 12px; font-weight: 600; }
+
+  /* ===================== EMPTY STATE ===================== */
+  .empty-state { text-align: center; padding: 36px 20px; color: var(--text2); }
+  .empty-state .empty-icon { font-size: 44px; margin-bottom: 10px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ===================== COOLDOWN ===================== */
+  .cooldown-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .cooldown-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: width 0.1s linear; }
+
+  /* ===================== FILTER TABS ===================== */
+  .filter-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .filter-tab { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; background: var(--bg3); border: 1px solid var(--border); color: var(--text2); transition: all 0.2s; }
+  .filter-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+</style>
+</head>
+<body>
+
+<!-- ==================== LOGIN ==================== -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">🏋️</div>
+    <div class="login-title" id="login-title">نظام إدارة الجيم</div>
+    <div class="login-sub" id="login-sub">أدخل كلمة المرور للدخول</div>
+    <div class="login-input-wrap">
+      <input type="password" class="login-input" id="loginInput" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter') checkLogin()" autocomplete="current-password" maxlength="20">
+      <button class="toggle-pw" onclick="togglePW()" tabindex="-1" id="togglePWBtn">👁</button>
+    </div>
+    <button class="login-btn" onclick="checkLogin()" id="login-btn">🔐 دخول</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-attempts" id="loginAttempts"></div>
+    <div style="margin-top:18px; display:flex; justify-content:center;">
+      <div class="lang-toggle">
+        <button class="lang-btn active" id="loginLangAr" onclick="setLang('ar')">🇸🇦 عربي</button>
+        <button class="lang-btn" id="loginLangEn" onclick="setLang('en')">🇬🇧 EN</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== HEADER ==================== -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏋️</div>
+    <span class="logo-text" id="logoText">نظام إدارة الجيم</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-ghost btn-sm" onclick="exportData()" title="تصدير JSON">💾 <span class="hbtn-text" id="hbtn-export">تصدير</span></button>
+    <button class="btn btn-ghost btn-sm" style="color:#00e676" onclick="exportExcel()" title="Excel">📊</button>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('importFile').click()" title="استيراد">📂</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="headerLangAr" onclick="setLang('ar')">🇸🇦</button>
+      <button class="lang-btn" id="headerLangEn" onclick="setLang('en')">🇬🇧</button>
+    </div>
+    <div id="supabaseStatus" class="badge badge-warning" onclick="loadFromSupabase()" style="cursor:pointer; font-size:10px;">⏳ DB</div>
+    <div class="header-time" id="headerTime">--:--:--</div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">📊</span><span data-key="dashboard">لوحة التحكم</span></div>
+    <div class="nav-item" onclick="showPage('members',this)"><span class="nav-icon">👥</span><span data-key="members">الأعضاء</span></div>
+    <div class="nav-item" onclick="showPage('rfid',this)"><span class="nav-icon">💳</span><span data-key="rfid">قارئ RFID</span></div>
+    <div class="nav-item" onclick="showPage('logs',this)"><span class="nav-icon">📋</span><span data-key="logs">سجل الدخول</span></div>
+  </aside>
+
+  <main>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card" style="--accent:#ff6b00">
+          <div class="stat-label" data-key="totalMembers">إجمالي الأعضاء</div>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-sub" data-key="memberReg">عضو مسجل</div>
+        </div>
+        <div class="stat-card" style="--accent:#00e676">
+          <div class="stat-label" data-key="activeMembers">اشتراكات نشطة</div>
+          <div class="stat-value" id="stat-active">0</div>
+          <div class="stat-sub" data-key="activeM">عضو نشط</div>
+        </div>
+        <div class="stat-card" style="--accent:#ffd740">
+          <div class="stat-label" data-key="expiringSoon">تنتهي قريباً</div>
+          <div class="stat-value" id="stat-expiring">0</div>
+          <div class="stat-sub" data-key="within7">خلال 7 أيام</div>
+        </div>
+        <div class="stat-card" style="--accent:#ff1744">
+          <div class="stat-label" data-key="expiredStat">منتهية الاشتراك</div>
+          <div class="stat-value" id="stat-expired">0</div>
+          <div class="stat-sub" data-key="needRenew">بحاجة للتجديد</div>
+        </div>
+      </div>
+      <div class="section-title">⚡ <span data-key="recentEntry">آخر الدخولات اليوم</span></div>
+      <div class="table-wrap">
+        <div id="recent-logs">
+          <div class="empty-state"><div class="empty-icon">📭</div><p data-key="noEntries">لا توجد دخولات اليوم بعد</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMBERS -->
+    <div class="page" id="page-members">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+        <h2 style="font-size:18px; font-weight:900;" data-key="manageMem">👥 إدارة الأعضاء</h2>
+        <button class="btn btn-primary" onclick="openAddModal()" data-key="addMember">➕ إضافة عضو</button>
+      </div>
+
+      <div class="filter-tabs" id="filterTabs">
+        <div class="filter-tab active" onclick="filterMembers('all', this)" data-key="filterAll">الكل</div>
+        <div class="filter-tab" onclick="filterMembers('active', this)" data-key="filterActive">نشط</div>
+        <div class="filter-tab" onclick="filterMembers('expiring', this)" data-key="filterExpiring">ينتهي قريباً</div>
+        <div class="filter-tab" onclick="filterMembers('expired', this)" data-key="filterExpired">منتهي</div>
+      </div>
+
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="ابحث عن عضو..." oninput="searchMembers(this.value)">
+      </div>
+
+      <div class="table-wrap mobile-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th data-key="thName">العضو</th>
+              <th data-key="thCard">رقم البطاقة</th>
+              <th data-key="thPlan">الاشتراك</th>
+              <th data-key="thEnd">انتهاء</th>
+              <th data-key="thStatus">الحالة</th>
+              <th data-key="thActions">إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="members-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RFID -->
+    <div class="page" id="page-rfid">
+      <h2 style="font-size:18px; font-weight:900; margin-bottom:16px;">💳 <span data-key="rfidTitle">قارئ RFID</span></h2>
+
+      <div class="table-wrap" style="padding:18px; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+          <div style="font-size:15px; font-weight:900;" data-key="readerTitle">🔌 ربط القارئ (ACR122U)</div>
+          <div id="readerStatus" class="badge badge-expired" data-key="notConnected">⛔ غير متصل</div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="connectReader()" id="btn-connect" data-key="connectReader">🔌 توصيل القارئ</button>
+          <button class="btn btn-ghost btn-sm" onclick="disconnectReader()" id="btnDisconnect" style="display:none" data-key="disconnect">❌ قطع الاتصال</button>
+          <span style="font-size:12px; color:var(--text2);" data-key="chromeNote">يتطلب Chrome أو Edge</span>
+        </div>
+        <div id="readerLog" style="margin-top:12px; background:var(--bg3); border-radius:10px; padding:12px; font-size:12px; color:var(--text2); display:none; direction:ltr;"></div>
+      </div>
+
+      <div class="rfid-scanner" id="rfidScanner" onclick="simulateScan()">
+        <div class="rfid-icon">📡</div>
+        <div class="rfid-text" id="scannerLabel" data-key="scanPrompt">اضغط هنا لمحاكاة قراءة بطاقة RFID</div>
+        <div class="rfid-result" id="rfidResult"></div>
+        <div class="cooldown-bar" id="cooldownBar" style="display:none">
+          <div class="cooldown-fill" id="cooldownFill" style="width:100%"></div>
+        </div>
+      </div>
+
+      <div class="section-title">🪪 <span data-key="readCardTitle">قراءة رقم بطاقة جديدة</span></div>
+      <div class="table-wrap" style="padding:18px; margin-bottom:16px;">
+        <div style="font-size:13px; color:var(--text2); margin-bottom:10px;" data-key="readCardDesc">ضع البطاقة على القارئ لمعرفة رقمها ثم انسخه عند إضافة عضو جديد</div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <input type="text" id="cardUID" placeholder="رقم البطاقة سيظهر هنا..." readonly
+            style="flex:1; background:var(--bg3); font-size:15px; font-weight:700; color:var(--green); direction:ltr; font-family:monospace;">
+          <button class="btn btn-ghost btn-sm" onclick="copyUID()" data-key="copy">📋 نسخ</button>
+        </div>
+      </div>
+
+      <div class="section-title">📌 <span data-key="howToUse">كيفية الاستخدام</span></div>
+      <div class="table-wrap" style="padding:18px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div style="background:var(--bg3); border-radius:10px; padding:14px;">
+            <div style="font-weight:700; margin-bottom:6px; color:var(--primary); font-size:13px;">🔌 <span data-key="step1title">الخطوة 1</span></div>
+            <div style="font-size:12px; color:var(--text2);" data-key="step1">وصّل قارئ ACR122U بـ USB واضغط توصيل</div>
+          </div>
+          <div style="background:var(--bg3); border-radius:10px; padding:14px;">
+            <div style="font-weight:700; margin-bottom:6px; color:var(--primary); font-size:13px;">💳 <span data-key="step2title">الخطوة 2</span></div>
+            <div style="font-size:12px; color:var(--text2);" data-key="step2">ضع البطاقة على القارئ لتظهر UID تلقائياً</div>
+          </div>
+          <div style="background:var(--bg3); border-radius:10px; padding:14px;">
+            <div style="font-weight:700; margin-bottom:6px; color:var(--primary); font-size:13px;">👤 <span data-key="step3title">الخطوة 3</span></div>
+            <div style="font-size:12px; color:var(--text2);" data-key="step3">انسخ الرقم وأضفه عند تسجيل عضو جديد</div>
+          </div>
+          <div style="background:var(--bg3); border-radius:10px; padding:14px;">
+            <div style="font-weight:700; margin-bottom:6px; color:var(--primary); font-size:13px;">✅ <span data-key="step4title">الخطوة 4</span></div>
+            <div style="font-size:12px; color:var(--text2);" data-key="step4">عند دخول العضو ضع بطاقته - يتعرف عليه فوراً!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGS -->
+    <div class="page" id="page-logs">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+        <h2 style="font-size:18px; font-weight:900;" data-key="logsTitle">📋 سجل الدخول والخروج</h2>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="filterLogs('all')" id="logFilterAll" data-key="filterAll">الكل</button>
+          <button class="btn btn-ghost btn-sm" onclick="filterLogs('in')" id="logFilterIn" data-key="entry">دخول</button>
+          <button class="btn btn-ghost btn-sm" onclick="filterLogs('out')" id="logFilterOut" data-key="exit">خروج</button>
+          <button class="btn btn-danger btn-sm" onclick="clearLogs()" data-key="clearLogs">🗑️</button>
+        </div>
+      </div>
+      <div class="table-wrap" id="logs-container">
+        <div class="empty-state"><div class="empty-icon">📋</div><p data-key="noLogs">لا يوجد سجل بعد</p></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ==================== ADD MODAL ==================== -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-title" id="modal-addTitle">➕ إضافة عضو جديد</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label data-key="fullName">الاسم الكامل *</label>
+        <input type="text" id="input-name" placeholder="محمد أحمد" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label data-key="phone">رقم الهاتف</label>
+        <input type="tel" id="input-phone" placeholder="222XXXXXXX" autocomplete="off">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label data-key="planLabel">نوع الاشتراك *</label>
+        <select id="input-plan">
+          <option value="1" data-key="monthly">شهري - 1 شهر</option>
+          <option value="3" data-key="quarterly">ربع سنوي - 3 أشهر</option>
+          <option value="6" data-key="biannual">نصف سنوي - 6 أشهر</option>
+          <option value="12" data-key="annual">سنوي - 12 شهر</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-key="startDate">تاريخ البداية *</label>
+        <input type="date" id="input-start">
+      </div>
+    </div>
+    <div class="form-group">
+      <label data-key="rfidNum">رقم بطاقة RFID *</label>
+      <input type="text" id="input-rfid" placeholder="أدخل رقم البطاقة" autocomplete="off" style="direction:ltr; font-family:monospace;">
+      <div class="rfid-assign" onclick="generateRFID()" data-key="genRFID">📡 اضغط لتوليد رقم تجريبي</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()" data-key="cancel">إلغاء</button>
+      <button class="btn btn-primary" onclick="addMember()" data-key="addBtn">✅ إضافة العضو</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== EDIT MODAL ==================== -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-title">✏️ <span data-key="editTitle">تعديل بيانات العضو</span></div>
+    <input type="hidden" id="edit-id">
+    <div class="form-row">
+      <div class="form-group">
+        <label data-key="fullName">الاسم الكامل *</label>
+        <input type="text" id="edit-name" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label data-key="phone">رقم الهاتف</label>
+        <input type="tel" id="edit-phone" autocomplete="off">
+      </div>
+    </div>
+    <div class="form-group">
+      <label data-key="rfidNum">رقم بطاقة RFID</label>
+      <input type="text" id="edit-rfid" style="direction:ltr; font-family:monospace;" autocomplete="off">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeEditModal()" data-key="cancel">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveEdit()" data-key="saveEdit">💾 حفظ التعديلات</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== RENEW MODAL ==================== -->
+<div class="modal-overlay" id="renewModal">
+  <div class="modal">
+    <div class="modal-title">🔄 <span data-key="renewTitle">تجديد الاشتراك</span></div>
+    <input type="hidden" id="renew-id">
+    <div id="renew-info" style="background:var(--bg3); border-radius:10px; padding:12px; margin-bottom:14px; font-size:13px;"></div>
+    <div class="form-group">
+      <label data-key="renewPlan">نوع الاشتراك الجديد</label>
+      <select id="renew-plan">
+        <option value="1" data-key="monthly">شهري - 1 شهر</option>
+        <option value="3" data-key="quarterly">ربع سنوي - 3 أشهر</option>
+        <option value="6" data-key="biannual">نصف سنوي - 6 أشهر</option>
+        <option value="12" data-key="annual">سنوي - 12 شهر</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeRenewModal()" data-key="cancel">إلغاء</button>
+      <button class="btn btn-primary" onclick="renewMember()" data-key="renewBtn">✅ تجديد</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ==================== BOTTOM NAV ==================== -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <div class="bottom-nav-item active" onclick="showPageMobile('dashboard',this)"><span class="nav-icon">📊</span><span data-key="dashboard">الرئيسية</span></div>
+    <div class="bottom-nav-item" onclick="showPageMobile('members',this)"><span class="nav-icon">👥</span><span data-key="members">الأعضاء</span></div>
+    <div class="bottom-nav-item" onclick="showPageMobile('rfid',this)"><span class="nav-icon">💳</span><span>RFID</span></div>
+    <div class="bottom-nav-item" onclick="showPageMobile('logs',this)"><span class="nav-icon">📋</span><span data-key="logs">السجل</span></div>
+  </div>
+</nav>
+
+<script>
+// ============================================================
+// TRANSLATIONS
+// ============================================================
+const TRANS = {
+  ar: {
+    dashboard:'لوحة التحكم', members:'الأعضاء', rfid:'RFID', logs:'السجل',
+    appName:'نظام إدارة الجيم',
+    loginTitle:'نظام إدارة الجيم', loginSub:'أدخل كلمة المرور للدخول', loginBtn:'🔐 دخول',
+    loginWrong:'❌ كلمة المرور غير صحيحة', loginLocked:'🔒 تم قفل الدخول لمدة دقيقة',
+    loginAttemptsLeft:'محاولة متبقية: ',
+    totalMembers:'إجمالي الأعضاء', memberReg:'عضو مسجل',
+    activeMembers:'اشتراكات نشطة', activeM:'عضو نشط',
+    expiringSoon:'تنتهي قريباً', within7:'خلال 7 أيام',
+    expiredStat:'منتهية الاشتراك', needRenew:'بحاجة للتجديد',
+    recentEntry:'آخر الدخولات اليوم', noEntries:'لا توجد دخولات اليوم بعد',
+    manageMem:'👥 إدارة الأعضاء', addMember:'➕ إضافة عضو',
+    search:'ابحث عن عضو...',
+    filterAll:'الكل', filterActive:'نشط', filterExpiring:'ينتهي قريباً', filterExpired:'منتهي',
+    thName:'العضو', thCard:'رقم البطاقة', thPlan:'الاشتراك', thEnd:'انتهاء', thStatus:'الحالة', thActions:'إجراءات',
+    noMembers:'لا يوجد أعضاء',
+    rfidTitle:'قارئ RFID', readerTitle:'🔌 ربط القارئ (ACR122U)',
+    notConnected:'⛔ غير متصل', connected:'✅ متصل',
+    connectReader:'🔌 توصيل القارئ', disconnect:'❌ قطع الاتصال',
+    chromeNote:'يتطلب Chrome أو Edge',
+    scanPrompt:'اضغط هنا لمحاكاة قراءة بطاقة RFID',
+    scanReady:'ضع البطاقة على القارئ',
+    readCardTitle:'قراءة رقم بطاقة جديدة',
+    readCardDesc:'ضع البطاقة على القارئ لمعرفة رقمها ثم انسخه عند إضافة عضو جديد',
+    copy:'📋 نسخ', howToUse:'كيفية الاستخدام',
+    step1title:'الخطوة 1', step1:'وصّل قارئ ACR122U بـ USB واضغط توصيل',
+    step2title:'الخطوة 2', step2:'ضع البطاقة على القارئ لتظهر UID تلقائياً',
+    step3title:'الخطوة 3', step3:'انسخ الرقم وأضفه عند تسجيل عضو جديد',
+    step4title:'الخطوة 4', step4:'عند دخول العضو ضع بطاقته - يتعرف عليه فوراً!',
+    logsTitle:'📋 سجل الدخول والخروج', clearLogs:'🗑️ مسح السجل', noLogs:'لا يوجد سجل بعد',
+    addTitle:'➕ إضافة عضو جديد', editTitle:'تعديل بيانات العضو',
+    fullName:'الاسم الكامل *', phone:'رقم الهاتف',
+    planLabel:'نوع الاشتراك *', startDate:'تاريخ البداية *', rfidNum:'رقم بطاقة RFID *',
+    genRFID:'📡 اضغط لتوليد رقم تجريبي', cancel:'إلغاء', addBtn:'✅ إضافة العضو',
+    saveEdit:'💾 حفظ التعديلات',
+    renewTitle:'تجديد الاشتراك', renewPlan:'نوع الاشتراك الجديد', renewBtn:'✅ تجديد',
+    monthly:'شهري - 1 شهر', quarterly:'ربع سنوي - 3 أشهر',
+    biannual:'نصف سنوي - 6 أشهر', annual:'سنوي - 12 شهر',
+    noPhone:'بدون هاتف', expiredDay:'منتهي', daysLeft:'يوم متبقي',
+    badgeActive:'✅ نشط', badgeExpired:'❌ منتهي',
+    entry:'✅ دخول', exit:'🚪 خروج',
+    export:'تصدير', importBtn:'استيراد',
+    deleteConfirm:'هل أنت متأكد من حذف هذا العضو؟',
+    clearConfirm:'هل تريد مسح سجل الدخول؟',
+    importConfirm:'سيتم استبدال جميع البيانات. هل أنت متأكد؟',
+    noExport:'لا يوجد أعضاء للتصدير!',
+    cardUIDph:'رقم البطاقة سيظهر هنا...',
+    noUID:'لا يوجد رقم للنسخ', uidCopied:'✅ تم نسخ الرقم!',
+    fillFields:'يرجى ملء جميع الحقول المطلوبة',
+    rfidUsed:'رقم البطاقة مستخدم مسبقاً!',
+    phoneUsed:'رقم الهاتف مستخدم مسبقاً!',
+    addedOk:'✅ تم إضافة العضو بنجاح!',
+    editedOk:'✅ تم حفظ التعديلات بنجاح!',
+    deletedOk:'تم حذف العضو',
+    renewedOk:'✅ تم تجديد الاشتراك بنجاح!',
+    logsCleared:'تم مسح السجل',
+    exportedOk:'✅ تم التصدير بنجاح!',
+    importedOk:'✅ تم الاستيراد بنجاح!',
+    invalidFile:'❌ ملف غير صحيح!',
+    fileError:'❌ خطأ في قراءة الملف!',
+    sbOk:'✅ تم تحميل البيانات من Supabase!',
+    sbErr:'❌ تعذر الاتصال بـ Supabase',
+    noMemScan:'❌ لا يوجد أعضاء مسجلين',
+    notReg:'❌ البطاقة غير مسجلة: ',
+    subExpired:'الاشتراك منتهي!',
+    cooldownMsg:'⏳ انتظر قبل قراءة نفس البطاقة',
+    readerConnected:'✅ تم توصيل القارئ! ضع البطاقة الآن...',
+    readerOk:'✅ تم توصيل القارئ!',
+    readerFail:'تعذر الاتصال بالقارئ',
+    readerDisc:'تم قطع الاتصال',
+    noDevice:'لم يتم اختيار أي جهاز',
+    webUSBErr:'WebUSB غير مدعوم - استخدم Chrome أو Edge',
+    renewInfo:'انتهاء الاشتراك الحالي: ',
+    renewNew:'سيمتد إلى: ',
+  },
+  en: {
+    dashboard:'Dashboard', members:'Members', rfid:'RFID', logs:'Logs',
+    appName:'Gym Management System',
+    loginTitle:'Gym Management', loginSub:'Enter password to continue', loginBtn:'🔐 Login',
+    loginWrong:'❌ Incorrect password', loginLocked:'🔒 Locked for 1 minute',
+    loginAttemptsLeft:'Attempts left: ',
+    totalMembers:'Total Members', memberReg:'registered',
+    activeMembers:'Active Subs', activeM:'active members',
+    expiringSoon:'Expiring Soon', within7:'within 7 days',
+    expiredStat:'Expired', needRenew:'need renewal',
+    recentEntry:"Today's Entries", noEntries:'No entries today yet',
+    manageMem:'👥 Manage Members', addMember:'➕ Add Member',
+    search:'Search member...',
+    filterAll:'All', filterActive:'Active', filterExpiring:'Expiring', filterExpired:'Expired',
+    thName:'Member', thCard:'Card No.', thPlan:'Plan', thEnd:'Expiry', thStatus:'Status', thActions:'Actions',
+    noMembers:'No members found',
+    rfidTitle:'RFID Reader', readerTitle:'🔌 Connect Reader (ACR122U)',
+    notConnected:'⛔ Disconnected', connected:'✅ Connected',
+    connectReader:'🔌 Connect Reader', disconnect:'❌ Disconnect',
+    chromeNote:'Requires Chrome or Edge',
+    scanPrompt:'Click here to simulate RFID card scan',
+    scanReady:'Place card on reader',
+    readCardTitle:'Read New Card UID',
+    readCardDesc:'Place card on reader to get UID, then copy when adding a new member',
+    copy:'📋 Copy', howToUse:'How to Use',
+    step1title:'Step 1', step1:'Connect ACR122U to USB and click Connect',
+    step2title:'Step 2', step2:'Place any RFID card to get UID automatically',
+    step3title:'Step 3', step3:'Copy UID and add when registering a new member',
+    step4title:'Step 4', step4:'Member places card - system recognizes instantly!',
+    logsTitle:'📋 Access Log', clearLogs:'🗑️ Clear', noLogs:'No logs yet',
+    addTitle:'➕ Add New Member', editTitle:'Edit Member Info',
+    fullName:'Full Name *', phone:'Phone Number',
+    planLabel:'Subscription Plan *', startDate:'Start Date *', rfidNum:'RFID Card Number *',
+    genRFID:'📡 Generate test number', cancel:'Cancel', addBtn:'✅ Add Member',
+    saveEdit:'💾 Save Changes',
+    renewTitle:'Renew Subscription', renewPlan:'New Plan', renewBtn:'✅ Renew',
+    monthly:'Monthly - 1 month', quarterly:'Quarterly - 3 months',
+    biannual:'Semi-annual - 6 months', annual:'Annual - 12 months',
+    noPhone:'No phone', expiredDay:'Expired', daysLeft:'days left',
+    badgeActive:'✅ Active', badgeExpired:'❌ Expired',
+    entry:'✅ Entry', exit:'🚪 Exit',
+    export:'Export', importBtn:'Import',
+    deleteConfirm:'Are you sure you want to delete this member?',
+    clearConfirm:'Clear access log?',
+    importConfirm:'All data will be replaced. Are you sure?',
+    noExport:'No members to export!',
+    cardUIDph:'Card UID will appear here...',
+    noUID:'No UID to copy', uidCopied:'✅ UID Copied!',
+    fillFields:'Please fill all required fields',
+    rfidUsed:'Card number already in use!',
+    phoneUsed:'Phone number already in use!',
+    addedOk:'✅ Member added successfully!',
+    editedOk:'✅ Changes saved successfully!',
+    deletedOk:'Member deleted',
+    renewedOk:'✅ Subscription renewed!',
+    logsCleared:'Logs cleared',
+    exportedOk:'✅ Exported successfully!',
+    importedOk:'✅ Imported successfully!',
+    invalidFile:'❌ Invalid file!',
+    fileError:'❌ Error reading file!',
+    sbOk:'✅ Data loaded from Supabase!',
+    sbErr:'❌ Failed to connect to Supabase',
+    noMemScan:'❌ No members registered',
+    notReg:'❌ Card not registered: ',
+    subExpired:'Subscription expired!',
+    cooldownMsg:'⏳ Wait before scanning same card',
+    readerConnected:'✅ Reader connected! Place card now...',
+    readerOk:'✅ Reader connected!',
+    readerFail:'Failed to connect reader',
+    readerDisc:'Disconnected',
+    noDevice:'No device selected',
+    webUSBErr:'WebUSB not supported - use Chrome or Edge',
+    renewInfo:'Current expiry: ',
+    renewNew:'Will extend to: ',
+  }
+};
+
+let currentLang = localStorage.getItem('gym_lang') || 'ar';
+function T(key) { return TRANS[currentLang][key] || key; }
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('gym_lang', lang);
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.body.style.direction = lang === 'ar' ? 'rtl' : 'ltr';
+
+  ['loginLangAr','headerLangAr'].forEach(id => { const e = document.getElementById(id); if(e) e.classList.toggle('active', lang==='ar'); });
+  ['loginLangEn','headerLangEn'].forEach(id => { const e = document.getElementById(id); if(e) e.classList.toggle('active', lang==='en'); });
+
+  document.querySelectorAll('[data-key]').forEach(el => {
+    const key = el.getAttribute('data-key');
+    if (TRANS[lang][key]) el.textContent = TRANS[lang][key];
+  });
+
+  const logoText = document.getElementById('logoText'); if(logoText) logoText.textContent = T('appName');
+  document.getElementById('login-title').textContent = T('loginTitle');
+  document.getElementById('login-sub').textContent = T('loginSub');
+  document.getElementById('login-btn').textContent = T('loginBtn');
+  const si = document.getElementById('searchInput'); if(si) si.placeholder = T('search');
+  const cu = document.getElementById('cardUID'); if(cu) cu.placeholder = T('cardUIDph');
+  const he = document.getElementById('hbtn-export'); if(he) he.textContent = T('export');
+
+  updateDashboard(); renderMembers(); renderLogs();
+}
+
+// ============================================================
+// LOGIN - حماية محسّنة
+// ============================================================
+const ADMIN_PASSWORD = 'GYM20@';
+const MAX_ATTEMPTS = 5;
+const LOCK_DURATION = 60000; // 1 minute
+let loginAttempts = parseInt(sessionStorage.getItem('login_attempts') || '0');
+let lockUntil = parseInt(sessionStorage.getItem('lock_until') || '0');
+
+function togglePW() {
+  const inp = document.getElementById('loginInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  document.getElementById('togglePWBtn').textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+function checkLogin() {
+  const now = Date.now();
+  const input = document.getElementById('loginInput');
+  const error = document.getElementById('loginError');
+  const attemptsEl = document.getElementById('loginAttempts');
+  const btn = document.getElementById('login-btn');
+
+  // Check if locked
+  if (lockUntil > now) {
+    const remaining = Math.ceil((lockUntil - now) / 1000);
+    error.textContent = T('loginLocked');
+    attemptsEl.textContent = remaining + 's';
+    return;
+  }
+
+  if (input.value === ADMIN_PASSWORD) {
+    input.classList.add('success');
+    loginAttempts = 0;
+    sessionStorage.setItem('login_attempts', '0');
+    sessionStorage.setItem('gym_auth', '1');
+    setTimeout(() => { document.getElementById('loginScreen').style.display = 'none'; }, 300);
+  } else {
+    loginAttempts++;
+    sessionStorage.setItem('login_attempts', loginAttempts);
+    input.classList.add('error');
+    input.value = '';
+
+    if (loginAttempts >= MAX_ATTEMPTS) {
+      lockUntil = now + LOCK_DURATION;
+      sessionStorage.setItem('lock_until', lockUntil);
+      error.textContent = T('loginLocked');
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.disabled = false;
+        loginAttempts = 0;
+        sessionStorage.setItem('login_attempts', '0');
+        lockUntil = 0;
+        sessionStorage.setItem('lock_until', '0');
+        error.textContent = '';
+        attemptsEl.textContent = '';
+      }, LOCK_DURATION);
+    } else {
+      error.textContent = T('loginWrong');
+      attemptsEl.textContent = T('loginAttemptsLeft') + (MAX_ATTEMPTS - loginAttempts);
+    }
+
+    setTimeout(() => { input.classList.remove('error'); }, 600);
+  }
+}
+
+if (sessionStorage.getItem('gym_auth') === '1') {
+  document.getElementById('loginScreen').style.display = 'none';
+}
+
+// ============================================================
+// SUPABASE
+// ============================================================
+const SUPABASE_URL = 'https://yrpzffyyqmlpydycioxe.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_fYv2sSL-RGOhTH-hdGgbLA_caxHaGiZ';
+
+async function sbFetch(table, options = {}) {
+  const method = options.method || 'GET';
+  let url = SUPABASE_URL + '/rest/v1/' + table;
+  if (options.query) url += '?' + options.query;
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'apikey': SUPABASE_KEY,
+    'x-client-info': 'gym-rfid/3.0',
+  };
+  if (options.prefer) headers['Prefer'] = options.prefer;
+
+  const fetchOptions = { method, headers };
+  if (options.body) fetchOptions.body = JSON.stringify(options.body);
+
+  const res = await fetch(url, fetchOptions);
+  const text = await res.text();
+  if (!res.ok) throw new Error(text || res.status);
+  return text ? JSON.parse(text) : [];
+}
+
+async function loadFromSupabase() {
+  const statusEl = document.getElementById('supabaseStatus');
+  statusEl.textContent = '⏳'; statusEl.className = 'badge badge-warning';
+  try {
+    const [m, l] = await Promise.all([
+      sbFetch('members', { query: 'select=*&order=name' }),
+      sbFetch('logs', { query: 'select=*&order=time.desc&limit=500' })
+    ]);
+    members = (m||[]).map(r => ({ id:r.id, name:r.name, phone:r.phone||'', rfid:r.rfid, plan:r.plan, startDate:r.start_date, endDate:r.end_date }));
+    logs = (l||[]).map(r => ({ id:r.id, memberId:r.member_id, name:r.name, rfid:r.rfid, time:r.time, type:r.type }));
+    localStorage.setItem('gym_members', JSON.stringify(members));
+    localStorage.setItem('gym_logs', JSON.stringify(logs));
+    updateDashboard(); renderMembers();
+    statusEl.className = 'badge badge-active'; statusEl.textContent = '✅ DB';
+    showToast(T('sbOk'), 'success');
+  } catch(e) {
+    statusEl.className = 'badge badge-expired'; statusEl.textContent = '❌ DB';
+    showToast(T('sbErr'), 'error');
+    console.error('Supabase:', e.message);
+  }
+}
+
+async function saveToSupabase(member) {
+  try { await sbFetch('members', { method:'POST', prefer:'return=minimal', body:{ id:member.id, name:member.name, phone:member.phone, rfid:member.rfid, plan:member.plan, start_date:member.startDate, end_date:member.endDate } }); } catch(e) { console.error('save:',e.message); }
+}
+
+async function deleteFromSupabase(id) {
+  try { await sbFetch('members', { method:'DELETE', query:'id=eq.'+id, prefer:'return=minimal' }); } catch(e) { console.error('del:',e.message); }
+}
+
+async function updateInSupabase(member) {
+  try { await sbFetch('members', { method:'PATCH', query:'id=eq.'+member.id, prefer:'return=minimal', body:{ name:member.name, phone:member.phone, rfid:member.rfid, plan:member.plan, end_date:member.endDate } }); } catch(e) { console.error('upd:',e.message); }
+}
+
+async function saveLogToSupabase(log) {
+  try { await sbFetch('logs', { method:'POST', prefer:'return=minimal', body:{ id:log.id, member_id:log.memberId, name:log.name, rfid:log.rfid, time:log.time, type:log.type } }); } catch(e) { console.error('log:',e.message); }
+}
+
+// ============================================================
+// DATA
+// ============================================================
+let members = [];
+let logs = [];
+try { members = JSON.parse(localStorage.getItem('gym_members')||'[]'); } catch(e) {}
+try { logs = JSON.parse(localStorage.getItem('gym_logs')||'[]'); } catch(e) {}
+
+// ============================================================
+// TIME
+// ============================================================
+function updateTime() {
+  const now = new Date();
+  const locale = currentLang === 'ar' ? 'ar-SA' : 'en-US';
+  document.getElementById('headerTime').textContent = now.toLocaleTimeString(locale);
+}
+setInterval(updateTime, 1000); updateTime();
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if (el) el.classList.add('active');
+  if (name==='dashboard') updateDashboard();
+  if (name==='members') renderMembers();
+  if (name==='logs') renderLogs();
+}
+
+function showPageMobile(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.bottom-nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if (el) el.classList.add('active');
+  if (name==='dashboard') updateDashboard();
+  if (name==='members') renderMembers();
+  if (name==='logs') renderLogs();
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function getDaysLeft(endDate) {
+  if (!endDate) return -999;
+  return Math.ceil((new Date(endDate) - new Date()) / 86400000);
+}
+
+function getStatusBadge(endDate) {
+  const d = getDaysLeft(endDate);
+  if (d <= 0) return `<span class="badge badge-expired">${T('badgeExpired')}</span>`;
+  if (d <= 7) return `<span class="badge badge-warning">⚠️ ${d} ${T('daysLeft')}</span>`;
+  return `<span class="badge badge-active">${T('badgeActive')}</span>`;
+}
+
+function getPlanName(plan) {
+  return { '1':T('monthly'), '3':T('quarterly'), '6':T('biannual'), '12':T('annual') }[plan] || plan;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  try { return new Date(dateStr).toLocaleDateString(currentLang==='ar'?'ar-SA':'en-US'); } catch(e) { return dateStr; }
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function updateDashboard() {
+  const today = new Date().toDateString();
+  const locale = currentLang==='ar'?'ar-SA':'en-US';
+  document.getElementById('stat-total').textContent = members.length;
+  document.getElementById('stat-active').textContent = members.filter(m => getDaysLeft(m.endDate) > 0).length;
+  document.getElementById('stat-expiring').textContent = members.filter(m => { const d=getDaysLeft(m.endDate); return d>0&&d<=7; }).length;
+  document.getElementById('stat-expired').textContent = members.filter(m => getDaysLeft(m.endDate) <= 0).length;
+
+  const todayLogs = logs.filter(l => new Date(l.time).toDateString()===today);
+  const el = document.getElementById('recent-logs');
+  if (todayLogs.length===0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>${T('noEntries')}</p></div>`;
+  } else {
+    el.innerHTML = todayLogs.slice(-10).reverse().map(l => `
+      <div class="log-item">
+        <div class="log-dot ${l.type==='in'?'in':'out'}"></div>
+        <div style="flex:1"><strong>${l.name}</strong></div>
+        <div style="color:var(--text2); font-size:12px">${new Date(l.time).toLocaleTimeString(locale)}</div>
+        <div class="badge ${l.type==='in'?'badge-active':'badge-expired'}">${l.type==='in'?T('entry'):T('exit')}</div>
+      </div>`).join('');
+  }
+}
+
+// ============================================================
+// MEMBERS FILTER
+// ============================================================
+let currentFilter = 'all';
+
+function filterMembers(type, el) {
+  currentFilter = type;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderMembers(document.getElementById('searchInput')?.value || '');
+}
+
+function getFilteredMembers(filter, search) {
+  let list = members;
+  if (search) list = list.filter(m => m.name.toLowerCase().includes(search.toLowerCase()) || m.rfid.toLowerCase().includes(search.toLowerCase()) || (m.phone||'').includes(search));
+  if (filter === 'active') list = list.filter(m => getDaysLeft(m.endDate) > 7);
+  if (filter === 'expiring') list = list.filter(m => { const d=getDaysLeft(m.endDate); return d>0&&d<=7; });
+  if (filter === 'expired') list = list.filter(m => getDaysLeft(m.endDate) <= 0);
+  return list;
+}
+
+function renderMembers(filter = '') {
+  const tbody = document.getElementById('members-table');
+  const list = getFilteredMembers(currentFilter, filter);
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👥</div><p>${T('noMembers')}</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(m => `
+    <tr>
+      <td>
+        <div class="member-info">
+          <div class="avatar">${m.name.charAt(0)}</div>
+          <div>
+            <div style="font-weight:700; font-size:13px">${m.name}</div>
+            <div style="font-size:11px; color:var(--text2)">${m.phone||T('noPhone')}</div>
+          </div>
+        </div>
+      </td>
+      <td><code style="background:var(--bg3); padding:2px 7px; border-radius:6px; font-size:11px; direction:ltr; display:inline-block">${m.rfid}</code></td>
+      <td style="font-size:12px">${getPlanName(m.plan)}</td>
+      <td>
+        <div style="font-size:12px">${m.endDate}</div>
+        <div class="${getDaysLeft(m.endDate)<=0?'days-expired':getDaysLeft(m.endDate)<=7?'days-warn':'days-ok'}">
+          ${getDaysLeft(m.endDate)<=0?T('expiredDay'):getDaysLeft(m.endDate)+' '+T('daysLeft')}
+        </div>
+      </td>
+      <td>${getStatusBadge(m.endDate)}</td>
+      <td>
+        <div style="display:flex; gap:4px; flex-wrap:wrap;">
+          <button class="btn btn-sm btn-blue" onclick="openEditModal('${m.id}')" title="تعديل">✏️</button>
+          <button class="btn btn-sm btn-success" onclick="openRenewModal('${m.id}')" title="تجديد">🔄</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteMember('${m.id}')" title="حذف">🗑️</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function searchMembers(val) { renderMembers(val); }
+
+// ============================================================
+// ADD MEMBER
+// ============================================================
+function openAddModal() {
+  document.getElementById('addModal').classList.add('open');
+  document.getElementById('input-start').value = new Date().toISOString().split('T')[0];
+  ['input-name','input-phone','input-rfid'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('input-plan').value = '1';
+}
+
+function closeModal() { document.getElementById('addModal').classList.remove('open'); }
+
+function generateRFID() {
+  document.getElementById('input-rfid').value = 'RF' + Math.random().toString(36).substr(2,8).toUpperCase();
+}
+
+function addMember() {
+  const name = document.getElementById('input-name').value.trim();
+  const phone = document.getElementById('input-phone').value.trim();
+  const plan = document.getElementById('input-plan').value;
+  const start = document.getElementById('input-start').value;
+  const rfid = document.getElementById('input-rfid').value.trim();
+
+  // Validation
+  const nameEl = document.getElementById('input-name');
+  const rfidEl = document.getElementById('input-rfid');
+  nameEl.classList.remove('input-error'); rfidEl.classList.remove('input-error');
+
+  const phoneEl = document.getElementById('input-phone');
+  phoneEl.classList.remove('input-error');
+
+  if (!name) { nameEl.classList.add('input-error'); showToast(T('fillFields'), 'error'); return; }
+  if (!rfid) { rfidEl.classList.add('input-error'); showToast(T('fillFields'), 'error'); return; }
+  if (!start) { showToast(T('fillFields'), 'error'); return; }
+  if (members.find(m => m.rfid.toUpperCase() === rfid.toUpperCase())) { rfidEl.classList.add('input-error'); showToast(T('rfidUsed'), 'error'); return; }
+  if (phone && members.find(m => m.phone && m.phone === phone)) { phoneEl.classList.add('input-error'); showToast(T('phoneUsed'), 'error'); return; }
+
+  const endDate = new Date(start);
+  endDate.setMonth(endDate.getMonth() + parseInt(plan));
+
+  const newMember = { id: Date.now().toString(), name, phone, plan, rfid: rfid.toUpperCase(), startDate: start, endDate: endDate.toISOString().split('T')[0] };
+  members.push(newMember);
+  save(); saveToSupabase(newMember);
+  closeModal(); renderMembers(); updateDashboard();
+  showToast(T('addedOk'), 'success');
+}
+
+// ============================================================
+// EDIT MEMBER - جديد
+// ============================================================
+function openEditModal(id) {
+  const member = members.find(m => m.id === id);
+  if (!member) return;
+  document.getElementById('edit-id').value = id;
+  document.getElementById('edit-name').value = member.name;
+  document.getElementById('edit-phone').value = member.phone || '';
+  document.getElementById('edit-rfid').value = member.rfid;
+  document.getElementById('editModal').classList.add('open');
+}
+
+function closeEditModal() { document.getElementById('editModal').classList.remove('open'); }
+
+function saveEdit() {
+  const id = document.getElementById('edit-id').value;
+  const name = document.getElementById('edit-name').value.trim();
+  const phone = document.getElementById('edit-phone').value.trim();
+  const rfid = document.getElementById('edit-rfid').value.trim().toUpperCase();
+
+  if (!name || !rfid) { showToast(T('fillFields'), 'error'); return; }
+
+  const existing = members.find(m => m.rfid.toUpperCase() === rfid && m.id !== id);
+  if (existing) { showToast(T('rfidUsed'), 'error'); return; }
+
+  const existingPhone = members.find(m => m.phone && m.phone === phone && m.id !== id);
+  if (phone && existingPhone) { showToast(T('phoneUsed'), 'error'); return; }
+
+  const member = members.find(m => m.id === id);
+  if (!member) return;
+  member.name = name; member.phone = phone; member.rfid = rfid;
+
+  save(); updateInSupabase(member);
+  closeEditModal(); renderMembers(); updateDashboard();
+  showToast(T('editedOk'), 'success');
+}
+
+// ============================================================
+// DELETE
+// ============================================================
+function deleteMember(id) {
+  if (!confirm(T('deleteConfirm'))) return;
+  deleteFromSupabase(id);
+  members = members.filter(m => m.id !== id);
+  save(); renderMembers(); updateDashboard();
+  showToast(T('deletedOk'), 'error');
+}
+
+// ============================================================
+// RENEW
+// ============================================================
+function openRenewModal(id) {
+  const member = members.find(m => m.id === id);
+  if (!member) return;
+  document.getElementById('renew-id').value = id;
+  const info = document.getElementById('renew-info');
+  const d = getDaysLeft(member.endDate);
+  info.innerHTML = `
+    <strong>${member.name}</strong><br>
+    <span style="color:var(--text2)">${T('renewInfo')}</span>
+    <span class="${d<=0?'days-expired':d<=7?'days-warn':'days-ok'}">${member.endDate}</span>
+    ${d<=0?'<span class="badge badge-expired" style="margin-right:6px">'+T('expiredDay')+'</span>':''}
+  `;
+  document.getElementById('renewModal').classList.add('open');
+}
+
+function closeRenewModal() { document.getElementById('renewModal').classList.remove('open'); }
+
+function renewMember() {
+  const id = document.getElementById('renew-id').value;
+  const plan = parseInt(document.getElementById('renew-plan').value);
+  const member = members.find(m => m.id === id);
+  if (!member) return;
+
+  const now = new Date();
+  const currentEnd = new Date(member.endDate);
+  const base = currentEnd > now ? currentEnd : now;
+  const newEnd = new Date(base);
+  newEnd.setMonth(newEnd.getMonth() + plan);
+  member.endDate = newEnd.toISOString().split('T')[0];
+  member.plan = plan.toString();
+
+  save(); updateInSupabase(member);
+  closeRenewModal(); renderMembers(); updateDashboard();
+  showToast(T('renewedOk'), 'success');
+}
+
+// ============================================================
+// RFID READER - تحسين منع التكرار
+// ============================================================
+let usbDevice = null, readerConnected = false, scanInterval = null;
+const SCAN_COOLDOWN = 5000; // 5 seconds between same card scans
+let lastScannedUID = '';
+let lastScanTime = 0;
+let cooldownTimer = null;
+
+async function connectReader() {
+  if (!navigator.usb) { showToast(T('webUSBErr'), 'error'); return; }
+  try {
+    const device = await navigator.usb.requestDevice({ filters: [{ vendorId: 0x072F }, { vendorId: 0x04E6 }] });
+    await device.open();
+    if (device.configuration === null) await device.selectConfiguration(1);
+    await device.claimInterface(0);
+    usbDevice = device; readerConnected = true;
+
+    document.getElementById('readerStatus').textContent = T('connected');
+    document.getElementById('readerStatus').className = 'badge badge-active';
+    document.getElementById('btnDisconnect').style.display = 'inline-flex';
+    const rl = document.getElementById('readerLog');
+    rl.style.display = 'block'; rl.textContent = T('readerConnected');
+    document.getElementById('scannerLabel').textContent = T('scanReady');
+    document.getElementById('rfidScanner').className = 'rfid-scanner ready';
+
+    showToast(T('readerOk'), 'success');
+    startReading();
+  } catch(err) {
+    if (err.name !== 'NotFoundError') {
+      document.getElementById('readerLog').style.display = 'block';
+      document.getElementById('readerLog').textContent = '⚠️ ' + err.message;
+    }
+    showToast(err.name === 'NotFoundError' ? T('noDevice') : T('readerFail'), 'error');
+  }
+}
+
+async function startReading() {
+  if (!usbDevice) return;
+  try { await usbDevice.transferOut(2, new Uint8Array([0xFF,0x00,0x48,0x00,0x00])); } catch(e) {}
+
+  scanInterval = setInterval(async () => {
+    if (!usbDevice || !readerConnected) return;
+    try {
+      await usbDevice.transferOut(2, new Uint8Array([0xFF,0xCA,0x00,0x00,0x00]));
+      const result = await usbDevice.transferIn(2, 64);
+      const data = new Uint8Array(result.data.buffer);
+      if (data.length >= 2 && data[data.length-2]===0x90 && data[data.length-1]===0x00) {
+        const uid = Array.from(data.slice(0,data.length-2)).map(b => b.toString(16).toUpperCase().padStart(2,'0')).join('');
+        document.getElementById('cardUID').value = uid;
+        document.getElementById('readerLog').textContent = '📡 ' + uid;
+
+        // منع تكرار نفس البطاقة
+        const now = Date.now();
+        if (uid === lastScannedUID && (now - lastScanTime) < SCAN_COOLDOWN) return;
+
+        lastScannedUID = uid;
+        lastScanTime = now;
+        handleScan(members.find(m => m.rfid.toUpperCase() === uid), uid);
+      }
+    } catch(e) {}
+  }, 600);
+}
+
+function disconnectReader() {
+  if (scanInterval) clearInterval(scanInterval);
+  if (usbDevice) { try { usbDevice.close(); } catch(e) {} }
+  usbDevice = null; readerConnected = false;
+  document.getElementById('readerStatus').className = 'badge badge-expired';
+  document.getElementById('readerStatus').textContent = T('notConnected');
+  document.getElementById('btnDisconnect').style.display = 'none';
+  document.getElementById('scannerLabel').textContent = T('scanPrompt');
+  document.getElementById('rfidScanner').className = 'rfid-scanner';
+  showToast(T('readerDisc'), 'error');
+}
+
+function copyUID() {
+  const uid = document.getElementById('cardUID').value;
+  if (!uid) { showToast(T('noUID'), 'error'); return; }
+  navigator.clipboard.writeText(uid).then(() => showToast(T('uidCopied'), 'success'));
+}
+
+// ============================================================
+// SIMULATION - مع منع التكرار
+// ============================================================
+let scanCount = 0;
+let simCooldown = false;
+
+function simulateScan() {
+  if (simCooldown) { showToast(T('cooldownMsg'), 'info'); return; }
+
+  const scanner = document.getElementById('rfidScanner');
+  const result = document.getElementById('rfidResult');
+  scanner.className = 'rfid-scanner scanning';
+  result.textContent = '...';
+  result.style.color = 'var(--text)';
+
+  setTimeout(() => {
+    if (members.length === 0) {
+      scanner.className = 'rfid-scanner error';
+      result.style.color = 'var(--red)';
+      result.textContent = T('noMemScan');
+      setTimeout(() => { scanner.className = 'rfid-scanner'; result.textContent = ''; }, 3000);
+      return;
+    }
+    const member = members[scanCount % members.length];
+    scanCount++;
+    handleScan(member, member.rfid);
+
+    // Cooldown bar
+    simCooldown = true;
+    const bar = document.getElementById('cooldownBar');
+    const fill = document.getElementById('cooldownFill');
+    bar.style.display = 'block'; fill.style.width = '100%';
+    const start = Date.now();
+    const interval = setInterval(() => {
+      const pct = Math.max(0, 100 - ((Date.now()-start)/SCAN_COOLDOWN)*100);
+      fill.style.width = pct + '%';
+      if (pct <= 0) { clearInterval(interval); bar.style.display = 'none'; simCooldown = false; }
+    }, 50);
+  }, 800);
+}
+
+function handleScan(member, uid) {
+  const scanner = document.getElementById('rfidScanner');
+  const result = document.getElementById('rfidResult');
+
+  if (!member) {
+    scanner.className = 'rfid-scanner error';
+    result.style.color = 'var(--red)';
+    result.textContent = T('notReg') + uid;
+    setTimeout(() => { if(!readerConnected) scanner.className = 'rfid-scanner'; result.textContent = ''; }, 3000);
+    return;
+  }
+
+  const daysLeft = getDaysLeft(member.endDate);
+  const todayEntries = logs.filter(l => l.memberId===member.id && new Date(l.time).toDateString()===new Date().toDateString()).length;
+  const isIn = todayEntries % 2 === 0;
+
+  if (daysLeft <= 0) {
+    scanner.className = 'rfid-scanner error';
+    result.style.color = 'var(--red)';
+    result.textContent = `❌ ${member.name} - ${T('subExpired')}`;
+    showToast(`${member.name}: ${T('subExpired')}`, 'error');
+  } else {
+    scanner.className = 'rfid-scanner success';
+    result.style.color = isIn ? 'var(--green)' : 'var(--yellow)';
+    result.textContent = `${isIn?T('entry'):T('exit')}: ${member.name}`;
+    showToast(`${isIn?T('entry'):T('exit')}: ${member.name}`, 'success');
+
+    const newLog = { id: Date.now().toString(), memberId: member.id, name: member.name, rfid: member.rfid, time: new Date().toISOString(), type: isIn?'in':'out' };
+    logs.push(newLog);
+    saveLogToSupabase(newLog);
+    if (logs.length > 500) logs = logs.slice(-500);
+    localStorage.setItem('gym_logs', JSON.stringify(logs));
+    if (document.getElementById('page-dashboard').classList.contains('active')) updateDashboard();
+  }
+
+  setTimeout(() => {
+    if (!readerConnected) { scanner.className = 'rfid-scanner'; result.textContent = ''; }
+    else { scanner.className = 'rfid-scanner ready'; result.textContent = ''; }
+  }, 3000);
+}
+
+// ============================================================
+// LOGS FILTER
+// ============================================================
+let logFilter = 'all';
+
+function filterLogs(type) {
+  logFilter = type;
+  ['all','in','out'].forEach(t => {
+    const btn = document.getElementById('logFilter'+t.charAt(0).toUpperCase()+t.slice(1));
+    if (btn) btn.className = 'btn btn-sm ' + (t===type ? 'btn-primary' : 'btn-ghost');
+  });
+  renderLogs();
+}
+
+function renderLogs() {
+  const container = document.getElementById('logs-container');
+  const locale = currentLang==='ar'?'ar-SA':'en-US';
+  let list = logs.slice().reverse().slice(0,100);
+  if (logFilter === 'in') list = list.filter(l => l.type==='in');
+  if (logFilter === 'out') list = list.filter(l => l.type==='out');
+
+  if (list.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>${T('noLogs')}</p></div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(l => `
+    <div class="log-item">
+      <div class="log-dot ${l.type==='in'?'in':'out'}"></div>
+      <div style="flex:1">
+        <strong>${l.name}</strong>
+        <div style="font-size:11px; color:var(--text2); direction:ltr">${l.rfid}</div>
+      </div>
+      <div style="color:var(--text2); font-size:12px; text-align:left; direction:ltr">
+        ${new Date(l.time).toLocaleDateString(locale)}<br>${new Date(l.time).toLocaleTimeString(locale)}
+      </div>
+      <div class="badge ${l.type==='in'?'badge-active':'badge-expired'}">${l.type==='in'?T('entry'):T('exit')}</div>
+    </div>`).join('');
+}
+
+function clearLogs() {
+  if (!confirm(T('clearConfirm'))) return;
+  logs = [];
+  localStorage.setItem('gym_logs', JSON.stringify(logs));
+  renderLogs(); updateDashboard();
+  showToast(T('logsCleared'), 'info');
+}
+
+// ============================================================
+// SAVE / TOAST
+// ============================================================
+function save() { localStorage.setItem('gym_members', JSON.stringify(members)); }
+
+let toastTimeout;
+function showToast(msg, type = 'success') {
+  clearTimeout(toastTimeout);
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ============================================================
+// EXPORT / IMPORT
+// ============================================================
+function exportExcel() {
+  if (members.length === 0) { showToast(T('noExport'), 'error'); return; }
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-GB').replace(/\//g,'-');
+  const timeStr = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+
+  // ── MEMBERS SHEET ──
+  const memberRows = [
+    // Title row
+    ['تقرير أعضاء الجيم - Gym Members Report'],
+    ['تاريخ التصدير / Export Date: ' + dateStr + ' ' + timeStr],
+    [''],
+    // Stats summary
+    ['📊 ملخص / Summary'],
+    ['إجمالي الأعضاء / Total Members', members.length],
+    ['نشط / Active', members.filter(m=>getDaysLeft(m.endDate)>0).length],
+    ['ينتهي قريباً / Expiring (7d)', members.filter(m=>{const d=getDaysLeft(m.endDate);return d>0&&d<=7;}).length],
+    ['منتهي / Expired', members.filter(m=>getDaysLeft(m.endDate)<=0).length],
+    [''],
+    // Headers
+    ['#','الاسم / Name','الهاتف / Phone','رقم البطاقة / RFID','الاشتراك / Plan','تاريخ البداية / Start','تاريخ الانتهاء / End','أيام متبقية / Days Left','الحالة / Status'],
+  ];
+
+  members.forEach((m, i) => {
+    const d = getDaysLeft(m.endDate);
+    memberRows.push([
+      i+1,
+      m.name,
+      m.phone || '-',
+      m.rfid,
+      getPlanName(m.plan),
+      m.startDate,
+      m.endDate,
+      d <= 0 ? 0 : d,
+      d <= 0 ? '❌ منتهي / Expired' : d <= 7 ? '⚠️ ينتهي قريباً / Expiring' : '✅ نشط / Active'
+    ]);
+  });
+
+  // ── LOGS SHEET ──
+  const logRows = [
+    ['سجل الدخول والخروج - Access Log'],
+    ['تاريخ التصدير / Export Date: ' + dateStr + ' ' + timeStr],
+    [''],
+    ['#','الاسم / Name','رقم البطاقة / RFID','التاريخ / Date','الوقت / Time','النوع / Type'],
+  ];
+
+  logs.slice().reverse().forEach((l, i) => {
+    const d = new Date(l.time);
+    logRows.push([
+      i+1,
+      l.name,
+      l.rfid,
+      d.toLocaleDateString('en-GB'),
+      d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+      l.type === 'in' ? '✅ دخول / Entry' : '🚪 خروج / Exit'
+    ]);
+  });
+
+  // ── STATS SHEET ──
+  const today = new Date().toDateString();
+  const todayIn = logs.filter(l => new Date(l.time).toDateString()===today && l.type==='in').length;
+  const todayOut = logs.filter(l => new Date(l.time).toDateString()===today && l.type==='out').length;
+
+  const planCounts = {'1':0,'3':0,'6':0,'12':0};
+  members.forEach(m => { if(planCounts[m.plan]!==undefined) planCounts[m.plan]++; });
+
+  const statsRows = [
+    ['إحصائيات / Statistics'],
+    [''],
+    ['📅 اليوم / Today'],
+    ['دخولات اليوم / Today Entries', todayIn],
+    ['خروجات اليوم / Today Exits', todayOut],
+    [''],
+    ['📋 توزيع الاشتراكات / Plan Distribution'],
+    ['شهري / Monthly (1m)', planCounts['1']],
+    ['ربع سنوي / Quarterly (3m)', planCounts['3']],
+    ['نصف سنوي / Semi-annual (6m)', planCounts['6']],
+    ['سنوي / Annual (12m)', planCounts['12']],
+    [''],
+    ['⚠️ تحذيرات / Warnings'],
+    ['ينتهي خلال 3 أيام / Expiring in 3 days', members.filter(m=>{const d=getDaysLeft(m.endDate);return d>0&&d<=3;}).length],
+  ];
+
+  // Expiring members detail
+  const expiring = members.filter(m=>{const d=getDaysLeft(m.endDate);return d>0&&d<=7;});
+  if (expiring.length > 0) {
+    statsRows.push(['']);
+    statsRows.push(['الأعضاء الذين ينتهي اشتراكهم قريباً / Expiring Soon']);
+    statsRows.push(['الاسم / Name','الهاتف / Phone','تاريخ الانتهاء / Expiry','أيام متبقية / Days']);
+    expiring.forEach(m => statsRows.push([m.name, m.phone||'-', m.endDate, getDaysLeft(m.endDate)]));
+  }
+
+  // ── BUILD CSV with multiple sections ──
+  const toCSV = rows => rows.map(row =>
+    Array.isArray(row)
+      ? row.map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(',')
+      : '"' + String(row).replace(/"/g,'""') + '"'
+  ).join('\n');
+
+  const csv = '\uFEFF' +
+    '======== MEMBERS ========\n' + toCSV(memberRows) +
+    '\n\n\n======== ACCESS LOG ========\n' + toCSV(logRows) +
+    '\n\n\n======== STATISTICS ========\n' + toCSV(statsRows);
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'gym-report-' + dateStr + '.csv'; a.click();
+  URL.revokeObjectURL(a.href);
+  showToast(T('exportedOk'), 'success');
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify({ members, logs, date: new Date().toISOString(), version:'3.0' }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'gym-backup-' + new Date().toISOString().split('T')[0] + '.json'; a.click();
+  showToast(T('exportedOk'), 'success');
+}
+
+function importData(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.members) { showToast(T('invalidFile'), 'error'); return; }
+      if (!confirm(T('importConfirm'))) return;
+      members = data.members || []; logs = data.logs || [];
+      localStorage.setItem('gym_members', JSON.stringify(members));
+      localStorage.setItem('gym_logs', JSON.stringify(logs));
+      updateDashboard(); renderMembers(); renderLogs();
+      showToast(T('importedOk'), 'success');
+    } catch(err) { showToast(T('fileError'), 'error'); }
+  };
+  reader.readAsText(file); event.target.value = '';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+setLang(currentLang);
+updateDashboard();
+renderMembers();
+loadFromSupabase();
+</script>
+</body>
+</html>
